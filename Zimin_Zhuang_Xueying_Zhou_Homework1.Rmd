@@ -1,0 +1,160 @@
+---
+title: "Assignment1"
+author: "Xueying Zhou, Zimin Zhuang"
+date: "1/26/2018"
+output: 
+  pdf_document: default
+  html_document: default
+---
+# Introduction
+
+This is our first assignment. In this assignment there are three parts: math equations and theorem environments, code chunks and the outputs including tables and plots.
+
+# Math Equations and Theorem Environments
+
+In this assignment, we approximate the distribution function of $N(0,1)$,$$\Phi(t) = \int_{-\infty}^t\frac{1}{\sqrt{2\pi}}e^{-\frac{y^2}{2}}dy,$$
+
+by the Monte Carlo methods:$$\hat{\Phi}(t) = \frac{1}{n}\sum_{i=1}^{n}I(X_i\leq{t}),$$
+where $X_i$'s are iid $N(0,1)$ variables. We experiment with the approximation at $n \in \{ 10^2, 10^3, 10^4 \}$ at 
+$t \in \{ 0.0, 0.67, 0.84, 1.28, 1.65, 2.32, 2.58, 3.09, 3.72\}$ and form a list for each time point. All these lists contains dataframes for the three different simulation scales, which are composed of the columns for actual values, simulated values and the bias indicated.
+
+
+
+
+# Code & Figures
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+need.packages <- function(pkg, ...)
+{
+  new.pkg <- pkg[! (pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, repos = "https://cloud.r-project.org")
+  foo <- function(a, ...) suppressMessages(require(a, ...))
+  sapply(pkg, foo, character.only = TRUE)
+  invisible(NULL)
+}
+
+pkgs <- c("ggplot2")
+need.packages(pkgs)
+```
+Fisrt, for each value of t, we calculate the actual probability from $N(0,1)$. Then we build a loop to generate random numbers from $N(0,1)$ for 100 times and calculate the corresponding $\hat{\Phi}$ as the simulated probablity. Third, the bias is obtained by deducting the simulated by the actual ones.
+
+```{r, echo=TRUE, eval = FALSE}
+require(ggplot2)
+library(ggplot2)
+n <- c(100,1000,10000)
+t <- c(0.0,0.67,0.84,1.28,1.65,2.32,2.58,3.09,3.72)
+i <- 1 #for t in 1:9
+j <- 1 #for n in 1:3
+k <- 1 #for 1-100
+
+#Initialize result.List
+
+
+result.List <- list()
+#
+
+for(i in 1:length(t)) {
+  result.List <- list()
+  box.df <- c()
+  box.plot <-c()
+  for (j in 1:length(n)) {
+    actual <- pnorm(t[i],0,1)
+    result<- data.frame(
+      act <- rep(actual,100),
+      sim <- rep(0,100)
+    )  
+    names(result) <- c("Actual.Probablity","Simulated.Probablity")
+    
+    for (k in 1:100) {
+      n.num <- rnorm(n[j],0,1)
+      ind <- ifelse(n.num <=t[i],1,0)
+      simu <- sum(ind)/n[j]
+      result$Simulated.Probablity[k] <- simu
+    }
+    
+    result$bias <- result$Simulated.Probablity - result$Actual.Probablity
+    result.List[[paste0("t",t[i], ".n", n[j])]] <- result
+  }
+  assign(paste0("t",t[i]), result.List)
+  #Boxplot
+  t.bias <- c(result.List[[1]]$bias,result.List[[2]]$bias,result.List[[3]]$bias)
+  t.n <- as.factor(c(rep(100,100),rep(1000,100),rep(10000,100)))
+  box.df <- data.frame(t.n, t.bias)
+  names(box.df) <- c("Scale","Bias")
+  
+  box.plot <- ggplot(box.df, aes(Scale, Bias, fill = Scale))
+  print(box.plot + labs(title = paste0("Box Plot for t=",t[i])) + geom_boxplot())
+  print(paste0("Simulation for t=",t[i], ", n = 100, 1000, 10000 complete!"))
+  
+}
+
+rm(box.df)
+rm(box.plot)
+rm(result)
+rm(result.List)
+```
+The next step is to draw the box plots for all the t values showing the biases for sample size of $10^2$, $10^3$ and $10^4$.
+
+```{r, echo=FALSE, eval = TRUE}
+require(ggplot2)
+library(ggplot2)
+n <- c(100,1000,10000)
+t <- c(0.0,0.67,0.84,1.28,1.65,2.32,2.58,3.09,3.72)
+i <- 1 #for t in 1:9
+j <- 1 #for n in 1:3
+k <- 1 #for 1-100
+
+#Initialize result.List
+
+
+result.List <- list()
+#
+
+for(i in 1:length(t)) {
+  result.List <- list()
+  box.df <- c()
+  box.plot <-c()
+  for (j in 1:length(n)) {
+    actual <- pnorm(t[i],0,1)
+    result<- data.frame(
+      act <- rep(actual,100),
+      sim <- rep(0,100)
+    )  
+    names(result) <- c("Actual.Probablity","Simulated.Probablity")
+    
+    for (k in 1:100) {
+      n.num <- rnorm(n[j],0,1)
+      ind <- ifelse(n.num <=t[i],1,0)
+      simu <- sum(ind)/n[j]
+      result$Simulated.Probablity[k] <- simu
+    }
+    
+    result$bias <- result$Simulated.Probablity - result$Actual.Probablity
+    result.List[[paste0("t",t[i], ".n", n[j])]] <- result
+  }
+  assign(paste0("t",t[i]), result.List)
+  #Boxplot
+  t.bias <- c(result.List[[1]]$bias,result.List[[2]]$bias,result.List[[3]]$bias)
+  t.n <- as.factor(c(rep(100,100),rep(1000,100),rep(10000,100)))
+  box.df <- data.frame(t.n, t.bias)
+  names(box.df) <- c("Scale","Bias")
+  
+  box.plot <- ggplot(box.df, aes(Scale, Bias, fill = Scale))
+  print(box.plot + labs(title = paste0("Box Plot for t=",t[i])) + geom_boxplot())
+  print(paste0("Simulation for t=",t[i], ", n = 100, 1000, 10000 complete!"))
+  
+}
+```
+
+The outputs are stored as lists with $t$ as the corresponding title, which contains three dataframes for $n=\{100, 1000, 10000\}$. As for demonstrate, we only show the dataframe for $t=0, n=100$. Other results are stored in the environment which can be easily retrived.
+
+```{r, echo=FALSE}
+table <- t0$t0.n100
+knitr::kable(table)
+rm(box.df)
+rm(box.plot)
+rm(result)
+rm(result.List)
+```
+
